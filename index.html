@@ -22,7 +22,7 @@
  <div class="top"><button class="secondary" style="padding:8px 12px" onclick="go('home')">←</button><div class="brand">✦ AI Assistant</div><div class="pill">Step 2/4</div></div>
  <div class="chat"><div class="label">Your request</div><div class="bubble">Tomorrow I need to move my apartment in Frankfurt. I need 2 people and a small van.</div><div class="ai"><b>I understood your request!</b><div class="small" style="margin-top:4px">Please check the details before we search.</div></div>
  <div class="extract"><div><span class="icon">🚚</span><span><div class="label">Service</div><b>Moving / Transport</b></span></div><div><span class="icon">📍</span><span><div class="label">Location</div><b>Frankfurt am Main</b></span></div><div><span class="icon">📅</span><span><div class="label">Date</div><b>Tomorrow</b></span></div><div><span class="icon">👥</span><span><div class="label">People</div><b>2 people</b></span></div><div><span class="icon">🚐</span><span><div class="label">Vehicle</div><b>Small van required</b></span></div></div>
- <div class="actions"><button class="primary" onclick="go('results')">✦ Yes, find solutions →</button><button class="secondary">Edit details</button></div></div>
+ <div class="actions"><button class="primary" onclick="createRequest()">✦ Yes, find solutions →</button><button class="secondary">Edit details</button></div></div>
 </section>
 <section id="results" class="screen">
  <div class="top"><button class="secondary" style="padding:8px 12px" onclick="go('ai')">←</button><div class="brand">Solutions</div><div class="pill">3 found</div></div>
@@ -102,7 +102,30 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function submitRequest(){const r={provider:'Frankfurt MovePro',date:document.getElementById('date').value||'Tomorrow',time:document.getElementById('time').value,people:document.getElementById('people').value,details:document.getElementById('details').value,status:'Sent'};const a=JSON.parse(localStorage.getItem('solutionRequests')||'[]');a.unshift(r);localStorage.setItem('solutionRequests',JSON.stringify(a));toast('Request sent ✓');setTimeout(()=>go('messages'),700)}
 function renderRequests(){const box=document.getElementById('savedRequests');const a=JSON.parse(localStorage.getItem('solutionRequests')||'[]');box.innerHTML=a.length?a.map(r=>`<div class="requestcard"><div style="display:flex;justify-content:space-between"><b>${r.provider}</b><span class="status">${r.status}</span></div><div class="small" style="margin-top:7px">📅 ${r.date} · ${r.time} &nbsp; 👥 ${r.people}</div><div class="small" style="margin-top:5px">${r.details}</div></div>`).join(''):'<div class="field"><div class="small">No requests yet. Send your first request to see it here.</div></div>'}
 function sendMessage(){const i=document.getElementById('chatInput');if(!i.value.trim())return;const d=document.createElement('div');d.className='msg me';d.textContent=i.value;i.parentElement.before(d);i.value='';toast('Message sent ✓')}
+async function createRequest(){
+  if(!sb || !currentUser){
+    toast('Please sign in first.');
+    go('account');
+    return;
+  }
 
+  const { error } = await sb.from('requests').insert({
+    customer_id: currentUser.id,
+    category: 'Moving / Transport',
+    location: 'Frankfurt am Main',
+    description: 'Tomorrow I need to move my apartment in Frankfurt. I need 2 people and a small van.',
+    status: 'open'
+  });
+
+  if(error){
+    console.error(error);
+    toast('Could not save request: ' + error.message);
+    return;
+  }
+
+  toast('Request saved!');
+  go('results');
+}
 window.addEventListener('DOMContentLoaded',()=>{initBackend();currentUser=currentUser||JSON.parse(localStorage.getItem('solutionDemoUser')||'null');updateAccountUI();renderRequests()});
 </script>
 </body></html>
